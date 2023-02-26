@@ -25,6 +25,9 @@ const (
 const (
 	TestAppID   = constant.TestAppID
 	TestAppHash = constant.TestAppHash
+
+	AndroidAppID   = constant.AndroidAppID
+	AndroidAppHash = constant.AndroidAppHash
 )
 
 // Config returns current config.

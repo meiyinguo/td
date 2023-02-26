@@ -1,10 +1,10 @@
 package manager
 
 import (
-	"runtime"
-
-	"github.com/gotd/td/telegram/internal/version"
+	"github.com/gotd/td/constant"
 	"github.com/gotd/td/tg"
+	"strconv"
+	"time"
 )
 
 // DeviceConfig is config which send when Telegram connection session created.
@@ -26,7 +26,14 @@ type DeviceConfig struct {
 	// Additional initConnection parameters. For now, only the tz_offset field is supported,
 	// for specifying timezone offset in seconds.
 	Params tg.JSONValueClass
+	//
+	AndroidAppFingerPrint string
 }
+
+var (
+	AndroidAppVersion     = constant.AndroidAppVersion
+	AndroidAppFingerPrint = constant.AndroidAppFingerPrint
+)
 
 // SetDefaults sets default values.
 func (c *DeviceConfig) SetDefaults() {
@@ -42,20 +49,38 @@ func (c *DeviceConfig) SetDefaults() {
 	}
 
 	if c.DeviceModel == "" {
-		set(&c.DeviceModel, runtime.Version())
+		set(&c.DeviceModel, "Samsung SM-G9880")
 	}
 	if c.SystemVersion == "" {
-		set(&c.SystemVersion, runtime.GOOS)
+		set(&c.SystemVersion, "SDK 30")
 	}
 	if c.AppVersion == "" {
-		set(&c.AppVersion, version.GetVersion())
+		set(&c.AppVersion, AndroidAppVersion)
 	}
 	if c.SystemLangCode == "" {
-		c.SystemLangCode = "en"
+		c.SystemLangCode = "en-us"
 	}
 	if c.LangCode == "" {
 		c.LangCode = "en"
 	}
-	// It's okay to use zero value Proxy.
-	// It's okay to use zero value Params.
+	if c.AndroidAppFingerPrint == "" {
+		c.AndroidAppFingerPrint = AndroidAppFingerPrint
+	}
+	if c.LangPack == "" {
+		c.LangPack = "android"
+	}
+	if c.Params == nil {
+		deviceToken := "__FIREBASE_GENERATING_SINCE_" + strconv.Itoa(int(time.Now().Unix())) + "__"
+		c.Params = &tg.JSONObject{
+			Value: []tg.JSONObjectValue{
+				{Key: "device_token", Value: &tg.JSONString{Value: deviceToken}},
+				{Key: "data", Value: &tg.JSONString{Value: c.AndroidAppFingerPrint}},
+				{Key: "installer", Value: &tg.JSONString{Value: ""}},
+				{Key: "package_id", Value: &tg.JSONString{Value: "org.telegram.messenger"}},
+				{Key: "tz_offset", Value: &tg.JSONNumber{Value: 0}},
+				{Key: "perf_cat", Value: &tg.JSONNumber{Value: 1}},
+			},
+		}
+	}
+
 }

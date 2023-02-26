@@ -1,16 +1,15 @@
 package auth
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/go-faster/errors"
 
-	"github.com/gotd/td/internal/crypto"
 	"github.com/gotd/td/tg"
 )
 
@@ -251,20 +250,12 @@ type testAuth struct {
 func (t testAuth) Phone(ctx context.Context) (string, error)    { return t.phone, nil }
 func (t testAuth) Password(ctx context.Context) (string, error) { return "", ErrPasswordNotProvided }
 func (t testAuth) Code(ctx context.Context, sentCode *tg.AuthSentCode) (string, error) {
-	type notFlashing interface {
-		GetLength() int
+	fmt.Print("Enter code: ")
+	code, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		return "", err
 	}
-
-	length := 5
-	if sentCode != nil {
-		typ, ok := sentCode.Type.(notFlashing)
-		if !ok {
-			return "", errors.Errorf("unexpected type: %T", sentCode.Type)
-		}
-		length = typ.GetLength()
-	}
-
-	return strings.Repeat(strconv.Itoa(t.dc), length), nil
+	return strings.TrimSpace(code), nil
 }
 
 func (t testAuth) AcceptTermsOfService(ctx context.Context, tos tg.HelpTermsOfService) error {
@@ -283,13 +274,10 @@ func (t testAuth) SignUp(ctx context.Context) (UserInfo, error) {
 // Can be used only with testing server. Will perform sign up if test user is
 // not registered.
 func Test(randReader io.Reader, dc int) UserAuthenticator {
-	// 99966XYYYY, X = dc_id, Y = random numbers, code = X repeat 6.
-	// The n value is from 0000 to 9999.
-	n, err := crypto.RandInt64n(randReader, 1000)
-	if err != nil {
-		panic(err)
-	}
-	phone := fmt.Sprintf("99966%d%04d", dc, n)
+
+	return TestUser("+8618520533002", dc)
+}
+func UsePhone(phone string, dc int) UserAuthenticator {
 
 	return TestUser(phone, dc)
 }
