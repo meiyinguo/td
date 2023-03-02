@@ -5,6 +5,7 @@ import (
 	"github.com/gotd/td/telegram"
 	"github.com/gotd/td/telegram/auth"
 	"github.com/gotd/td/telegram/dcs"
+	"github.com/gotd/td/tg"
 	"go.uber.org/zap"
 	"golang.org/x/net/proxy"
 	"os"
@@ -36,16 +37,21 @@ func main() {
 		storage := &telegram.FileSessionStorage{
 			Path: filepath.Join(sessionDir, "session-user.json"),
 		}
+		dispatcher := tg.NewUpdateDispatcher()
+		sock5, _ := proxy.SOCKS5("tcp", "127.0.0.1:16005", &proxy.Auth{}, proxy.Direct)
+		dc := sock5.(proxy.ContextDialer)
 
 		client := telegram.NewClient(telegram.AndroidAppID, telegram.AndroidAppHash, telegram.Options{
 			Logger:         log,
 			SessionStorage: storage,
-			Resolver:       dcs.Plain(dcs.PlainOptions{Dial: proxy.Dial}),
+			Resolver:       dcs.Plain(dcs.PlainOptions{Dial: dc.DialContext}),
 			DCList:         dcs.Live(),
+			UpdateHandler:  dispatcher,
 		})
 		return client.Run(ctx, func(ctx context.Context) error {
 			flow := auth.NewFlow(
-				auth.UsePhone("84927939741"), auth.SendCodeOptions{},
+				//auth.UsePhone("84927939741"), auth.SendCodeOptions{},
+				auth.UsePhone("+8618520533002"), auth.SendCodeOptions{},
 			)
 			if err := client.Auth().IfNecessary(ctx, flow); err != nil {
 				return err
@@ -53,8 +59,17 @@ func main() {
 			if _, err := client.Auth().Status(ctx); err != nil {
 				return err
 			}
-
-			return nil
+			//sender := message.NewSender(tg.NewClient(client))
+			dispatcher.OnNewMessage(func(ctx context.Context, entities tg.Entities, u *tg.UpdateNewMessage) error {
+				m, ok := u.Message.(*tg.Message)
+				if !ok || m.Out {
+					return nil
+				}
+				log.Debug("receive msg  ", zap.String("from: ", m.FromID.String()), zap.String("msg: ", m.Message))
+				//_, err := sender.Reply(entities, u).Text(ctx, m.Message)
+				return err
+			})
+			return telegram.RunUntilCanceled(ctx, client)
 		})
 	})
 }
