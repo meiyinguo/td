@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-faster/errors"
 
@@ -243,7 +245,6 @@ func CodeOnly(phone string, code CodeAuthenticator) UserAuthenticator {
 }
 
 type testAuth struct {
-	dc    int
 	phone string
 }
 
@@ -264,8 +265,8 @@ func (t testAuth) AcceptTermsOfService(ctx context.Context, tos tg.HelpTermsOfSe
 
 func (t testAuth) SignUp(ctx context.Context) (UserInfo, error) {
 	return UserInfo{
-		FirstName: "Test",
-		LastName:  "User",
+		FirstName: "Mei_" + strconv.Itoa(int(time.Now().Unix())),
+		LastName:  "Mei_" + strconv.Itoa(int(time.Now().Unix())),
 	}, nil
 }
 
@@ -275,11 +276,11 @@ func (t testAuth) SignUp(ctx context.Context) (UserInfo, error) {
 // not registered.
 func Test(randReader io.Reader, dc int) UserAuthenticator {
 
-	return TestUser("+8618520533002", dc)
+	return TestUser("+8618520533002")
 }
-func UsePhone(phone string, dc int) UserAuthenticator {
+func UsePhone(phone string) UserAuthenticator {
 
-	return TestUser(phone, dc)
+	return TestUser(phone)
 }
 
 // TestUser returns UserAuthenticator that authenticates via testing credentials.
@@ -287,9 +288,8 @@ func UsePhone(phone string, dc int) UserAuthenticator {
 //
 // Can be used only with testing server. Will perform sign up if test user is
 // not registered.
-func TestUser(phone string, dc int) UserAuthenticator {
+func TestUser(phone string) UserAuthenticator {
 	return testAuth{
-		dc:    dc,
 		phone: phone,
 	}
 }

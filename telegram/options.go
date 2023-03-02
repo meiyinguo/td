@@ -107,7 +107,7 @@ func (opt *Options) setDefaults() {
 		opt.Logger = zap.NewNop()
 	}
 	if opt.DC == 0 {
-		opt.DC = 2
+		opt.DC = 5
 	}
 	if opt.DCList.Zero() {
 		opt.DCList = dcs.Prod()

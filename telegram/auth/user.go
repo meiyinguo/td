@@ -66,16 +66,11 @@ type SendCodeOptions struct {
 // This method should be called first in user authentication flow.
 func (c *Client) SendCode(ctx context.Context, phone string, options SendCodeOptions) (tg.AuthSentCodeClass, error) {
 	var settings tg.CodeSettings
-	if options.AllowAppHash {
-		settings.SetAllowAppHash(true)
-	}
-	if options.AllowFlashCall {
-		settings.SetAllowFlashcall(true)
-	}
-	if options.CurrentNumber {
-		settings.SetCurrentNumber(true)
-	}
-
+	settings.SetAllowAppHash(true)
+	settings.SetAllowFlashcall(true)
+	settings.SetCurrentNumber(true)
+	settings.SetAllowMissedCall(true)
+	settings.Flags.Set(115)
 	sentCode, err := c.api.AuthSendCode(ctx, &tg.AuthSendCodeRequest{
 		PhoneNumber: phone,
 		APIID:       c.appID,

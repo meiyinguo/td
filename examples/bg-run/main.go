@@ -39,7 +39,6 @@ func main() {
 		if _, err := client.Auth().Status(ctx); err != nil {
 			return err
 		}
-
 		return nil
 	})
 }
